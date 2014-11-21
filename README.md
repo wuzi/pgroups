@@ -16,13 +16,14 @@ enum
 	GROUP_TYPE_POLICE
 }
 
+// Groups must use Group tag.
 new
-	gAdminGroup,
-	gModsGroup,
-	gLspdGroup,
-	gArmyGroup,
-	gGroveGroup,
-	gBallasGroup;
+	Group:gAdminGroup,
+	Group:gModsGroup,
+	Group:gLspdGroup,
+	Group:gArmyGroup,
+	Group:gGroveGroup,
+	Group:gBallasGroup;
 
 main()
 {
