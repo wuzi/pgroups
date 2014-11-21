@@ -32,7 +32,7 @@
 		-
 
 	Version:
-		1.0
+		1.1
 */
 
 //------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ native CreateGroup(groupname[], type = INVALID_GROUP_TYPE);
 native SendGroupTypeMessage(grouptype, color, message[]);
 native RemovePlayerFromGroup(playerid, groupid);
 native AddPlayerToGroup(playerid, groupid);
-native SendGroupMessage(color, message[]);
+native SendGroupMessage(groupid, color, message[]);
 native IsPlayerInGroup(playerid, groupid);
 native SetGroupName(groupid, groupname[]);
 native SetGroupType(groupid, grouptype);
@@ -88,34 +88,46 @@ static g_eGroupData[MAX_GROUPS][E_GROUP_DATA];
 
 //------------------------------------------------------------------------------
 
-stock CreateGroup(const groupname[], type = INVALID_GROUP_TYPE)
+stock Group:CreateGroup(const groupname[], type = INVALID_GROUP_TYPE)
 {
-	new nGroupCounter = GetFreeGroupID();
-	if(nGroupCounter == INVALID_GROUP_ID)
-	{
-		print("ERROR: Limit of groups exceeded! Increase the limit or reduce the created groups.");
-		return 0;
+	if(strlen(groupname) < 2) {
+		printf("ERROR: Group name '%s' too small!", groupname);
+		return Group:INVALID_GROUP_ID;
 	}
 
-	g_eGroupData[nGroupCounter][E_GROUP_TYPE] = type;
-	format(g_eGroupData[nGroupCounter][E_GROUP_NAME], MAX_GROUP_NAME, groupname);
-	return nGroupCounter;
+	for(new i; i < MAX_GROUPS; i++) {
+		if((strcmp(g_eGroupData[i][E_GROUP_NAME], groupname, true, strlen(groupname)) == 0) && strlen(g_eGroupData[i][E_GROUP_NAME]) > 1) {
+			printf("ERROR: Duplicated group! There's already a group called '%s'.", groupname);
+			return Group:INVALID_GROUP_ID;
+		}
+	}
+
+	new groupid = GetFreeGroupID();
+	if(groupid == INVALID_GROUP_ID)
+	{
+		print("ERROR: Limit of groups exceeded! Increase the limit or reduce the created groups.");
+		return Group:INVALID_GROUP_ID;
+	}
+
+	g_eGroupData[_:groupid][E_GROUP_TYPE] = type;
+	format(g_eGroupData[_:groupid][E_GROUP_NAME], MAX_GROUP_NAME, groupname);
+	return Group:groupid;
 }
 
 //------------------------------------------------------------------------------
 
-stock SetGroupName(groupid, const groupname[])
+stock SetGroupName(Group:groupid, const groupname[])
 {
-	format(g_eGroupData[groupid][E_GROUP_NAME], MAX_GROUP_NAME, groupname);
+	format(g_eGroupData[_:groupid][E_GROUP_NAME], MAX_GROUP_NAME, groupname);
 	return 1;
 }
 
 //------------------------------------------------------------------------------
 
-stock GetGroupName(groupid)
+stock GetGroupName(Group:groupid)
 {
 	new groupName[MAX_GROUP_NAME];
-	format(groupName, sizeof(groupName), g_eGroupData[groupid][E_GROUP_NAME]);
+	format(groupName, sizeof(groupName), g_eGroupData[_:groupid][E_GROUP_NAME]);
 	return groupName;
 }
 
@@ -125,7 +137,7 @@ stock GetGroupIDbyName(const groupname[])
 {
 	for (new i; i < MAX_GROUPS; i++)
 	{
-		if((strcmp(g_eGroupData[i][E_GROUP_NAME], groupname, true, strlen(groupname)) == 0))
+		if((strcmp(g_eGroupData[_:i][E_GROUP_NAME], groupname, true, strlen(groupname)) == 0))
 			return i;
 	}
 	return INVALID_GROUP_ID;
@@ -133,48 +145,48 @@ stock GetGroupIDbyName(const groupname[])
 
 //------------------------------------------------------------------------------
 
-stock SetGroupType(groupid, grouptype)
-	return g_eGroupData[groupid][E_GROUP_TYPE] = grouptype;
+stock SetGroupType(Group:groupid, grouptype)
+	return g_eGroupData[_:groupid][E_GROUP_TYPE] = grouptype;
 
 //------------------------------------------------------------------------------
 
-stock GetGroupType(groupid)
-	return g_eGroupData[groupid][E_GROUP_TYPE];
+stock GetGroupType(Group:groupid)
+	return g_eGroupData[_:groupid][E_GROUP_TYPE];
 
 //------------------------------------------------------------------------------
 
-stock IsPlayerInGroup(playerid, groupid)
+stock bool:IsPlayerInGroup(playerid, Group:groupid)
 {
 	new playerGroup[16];
-	format(playerGroup, 16, "p_group_%i", groupid);
+	format(playerGroup, 16, "p_group_%i", _:groupid);
 	if(GetPVarInt(playerid, playerGroup))
-		return 1;
-	return 0;
+		return true;
+	return false;
 }
 
 //------------------------------------------------------------------------------
 
-stock AddPlayerToGroup(playerid, groupid)
+stock AddPlayerToGroup(playerid, Group:groupid)
 {
 	new playerGroup[16];
-	format(playerGroup, 16, "p_group_%i", groupid);
+	format(playerGroup, 16, "p_group_%i", _:groupid);
 	SetPVarInt(playerid, playerGroup, true);
 	return 1;
 }
 
 //------------------------------------------------------------------------------
 
-stock RemovePlayerFromGroup(playerid, groupid)
+stock RemovePlayerFromGroup(playerid, Group:groupid)
 {
 	new playerGroup[16];
-	format(playerGroup, 16, "p_group_%i", groupid);
+	format(playerGroup, 16, "p_group_%i", _:groupid);
 	DeletePVar(playerid, playerGroup);
 	return 1;
 }
 
 //------------------------------------------------------------------------------
 
-stock SendGroupMessage(groupid, color, const message[])
+stock SendGroupMessage(Group:groupid, color, const message[])
 {
 	for(new i; i < GetMaxPlayers(); i++)
 	{
@@ -196,8 +208,8 @@ stock SendGroupTypeMessage(grouptype, color, const message[])
 		if(!IsPlayerConnected(i))
 			continue;
 
-		for(new g; g < MAX_GROUPS; g++)
-			if(IsPlayerInGroup(i, g) && g_eGroupData[g][E_GROUP_TYPE] == grouptype)
+		for(new Group:g; _:g < MAX_GROUPS; _:g++)
+			if(IsPlayerInGroup(i, g) && g_eGroupData[_:g][E_GROUP_TYPE] == grouptype)
 				SendClientMessage(i, color, message);	
 	}
 	return 1;
