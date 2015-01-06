@@ -1,4 +1,4 @@
-SA-MP-Player-Groups
+pgroups.inc
 ===================
 
 A SA:MP library for creating and managing player groups.
